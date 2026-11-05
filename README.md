@@ -27,4 +27,9 @@ There are 91300 rows in the radio data set. The 8 columns include Song, Artist, 
 
 For cleaning the data, we used the select column to take out the image URL column of both data sets because we felt that was irrelevant to our analysis (it linked a picture of the album). We used gsub to remove spaces from the column names and added underscores instead for both data sets. We used mutate to replace the - with a 1 for the Weeks_in_Charts column for both data sets. We then set the Weeks_in_Charts column to be numeric for both sets. We used the mutate function to create a Times_at_1 column to represent the # of times a song hit #1 for both sets. We created a Type column to prepare for merge and represent if the data is about streaming or radio. We merged the data sets together using all of the column names because they are all the same. Song name, weeks_in_charts, date, and type(streaming or radio) are all especially helpful to answer our research questions.
 
+### View the Analysis
+
+This project includes an R Markdown analysis comparing Billboard radio and streaming chart performance. 
+
+- [View HTML Report](billboard_analysis_reconstructed.html) - Access the complete rendered analysis, including visualizations and results.
 

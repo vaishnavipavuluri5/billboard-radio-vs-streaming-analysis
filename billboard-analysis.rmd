@@ -1,0 +1,368 @@
+---
+title: "Billboard Radio vs. Streaming: Chart Trends"
+author: "Ananya Suthram, Brooke Martin, Samantha Oh, Vaishnavi Pavuluri"
+date: "2025-12-05"
+output: html_document
+---
+
+## Research questions
+
+1. Which songs charted for the most weeks?
+2. How does artist ranking consistency differ across radio and streaming?
+3. Which songs achieved different peak positions on the two charts?
+4. Which songs remained in the top 20 during the selected month?
+
+## Data source
+
+[Billboard dataset on Kaggle](https://www.kaggle.com/datasets/ludmin/billboard). Place `radio.csv` and `streaming_songs.csv` in the `data/` folder. Run this document from the repository root or adjust the relative paths.
+
+## 1. Data Preparation
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+### 1.1 Import and Clean Radio Data
+
+```{r, message=FALSE, warning=FALSE}
+radio <- read_delim("radio.csv") %>%
+  mutate(Type = "Radio") %>%
+  select(-`Image URL`)
+names(radio) <- gsub(" ", "_", names(radio))
+head(radio)
+```
+
+```{r, message=FALSE, warning=FALSE}
+radio <- radio %>%
+  mutate(Weeks_in_Charts = ifelse(Weeks_in_Charts == "-", "1",
+Weeks_in_Charts))
+radio$Weeks_in_Charts <- as.numeric(radio$Weeks_in_Charts)
+head(radio)
+```
+
+```{r, message=FALSE, warning=FALSE}
+radio <- radio %>%
+  arrange(Date, Song) %>%
+  group_by(Song) %>%
+  mutate(Times_at_1 = cumsum(Rank == 1)) %>%
+  arrange(Date, Rank)
+head(radio)
+```
+
+### 1.2 Import and Clean Streaming Data
+
+```{r, message=FALSE, warning=FALSE}
+streaming <- read_delim("streaming_songs.csv") %>%
+  mutate(Type = "Streaming") %>%
+  select(-`Image URL`)
+names(streaming) <- gsub(" ", "_", names(streaming))
+```
+
+```{r, message=FALSE, warning=FALSE}
+streaming <- streaming %>%
+  mutate(Weeks_in_Charts = ifelse(Weeks_in_Charts == "-", "1",
+Weeks_in_Charts))
+
+streaming$Weeks_in_Charts <- as.numeric(streaming$Weeks_in_Charts)
+head(streaming)
+```
+
+```{r, message=FALSE, warning=FALSE}
+streaming <- streaming %>%
+  arrange(Date, Song) %>%
+  group_by(Song) %>%
+  mutate(Times_at_1 = cumsum(Rank == 1)) %>%
+  arrange(Date, Rank)
+head(streaming)
+```
+
+### 1.3 Combine Datasets
+
+```{r, message=FALSE, warning=FALSE}
+combined <- merge(radio, streaming, by = intersect(names(radio),
+names(streaming)), all = TRUE)
+sample_n(combined, 6)
+```
+
+## 2. Chart Longevity Analysis
+
+```{r, message=FALSE, warning=FALSE}
+radioWeeks <- radio %>%
+  group_by(Song) %>%
+  summarize(Weeks_in_Charts = n()) %>%
+  arrange(desc(Weeks_in_Charts))
+
+radioWeeks %>%
+  head(10) %>%
+  ggplot(aes(x = reorder(Song, Weeks_in_Charts),
+             y = Weeks_in_Charts)) +
+  geom_col(fill = "lightblue") +
+  coord_flip() +
+  labs(title = "Top 10 Radio Songs by Number of Charting Weeks",
+       x = "Song", y = "Charting Weeks") +
+  theme_minimal()
+```
+
+```{r, message=FALSE, warning=FALSE}
+streamingWeeks <- streaming %>%
+  group_by(Song) %>%
+  summarize(Weeks_in_Charts = n()) %>%
+  arrange(desc(Weeks_in_Charts))
+
+streamingWeeks %>%
+  head(10) %>%
+  ggplot(aes(x = reorder(Song, Weeks_in_Charts),
+             y = Weeks_in_Charts)) +
+  geom_col(fill = "brown2") +
+  coord_flip() +
+  labs(title = "Top 10 Streaming Songs by # of Charting Weeks",
+       x = "Song", y = "Charting Weeks") +
+  theme_minimal()
+```
+
+```{r, message=FALSE, warning=FALSE}
+combinedWeeks <- combined %>%
+  group_by(Song) %>%
+  summarise(Weeks_in_Charts = n()) %>%
+  arrange(desc(Weeks_in_Charts))
+
+combinedWeeks %>%
+  head(10) %>%
+  ggplot(aes(x = reorder(Song, Weeks_in_Charts),
+             y = Weeks_in_Charts)) +
+  geom_col(fill = "darkorchid1") +
+  coord_flip() +
+  labs(title = "Top 10 Songs by Number of Charting Weeks",
+       x = "Song", y = "Charting Weeks") +
+  theme_minimal()
+```
+
+## 3. Artist Ranking Consistency
+
+```{r, message=FALSE, warning=FALSE}
+visual_radio <- combined %>%
+  filter(Type == "Radio") %>%
+  mutate(
+    Maintained_Rank = Rank == Last_Week,
+    Increased_Rank = Rank < Last_Week,
+    Decreased_Rank = Rank > Last_Week
+    ) %>%
+  select(Song, Artist, Maintained_Rank, Increased_Rank, Decreased_Rank) %>%
+  distinct()
+```
+
+```{r, message=FALSE, warning=FALSE}
+visual_streaming <- combined %>%
+  filter(Type == "Streaming") %>%
+  filter(!is.na(Rank), !is.na(Last_Week)) %>%
+  mutate(
+    Maintained_Rank = Rank == Last_Week,
+    Increased_Rank = Rank < Last_Week,
+    Decreased_Rank = Rank > Last_Week
+    ) %>%
+  select(Song, Artist, Maintained_Rank, Increased_Rank, Decreased_Rank) %>%
+  distinct()
+```
+
+```{r, message=FALSE, warning=FALSE}
+sample_of_15_artists <- visual_streaming %>%
+  filter(nchar(Artist) <= 17) %>%
+  distinct() %>%
+  sample_n(15) %>%
+  pull(Artist)
+
+sample_of_15_artists
+```
+
+```{r, message=FALSE, warning=FALSE}
+visual_radio %>%
+  filter(Artist %in% sample_of_15_artists) %>%
+  group_by(Artist) %>%
+  summarize(
+    Maintained_Rank = sum(Maintained_Rank, na.rm = TRUE),
+    Increased_Rank = sum(Increased_Rank, na.rm = TRUE),
+    Decreased_Rank = sum(Decreased_Rank, na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(Maintained_Rank, Increased_Rank, Decreased_Rank),
+    names_to = "Type",
+    values_to = "Count"
+  ) %>%
+  ggplot(aes(x = Artist, y = Count, fill = Type)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(
+    values = c(
+      "Maintained_Rank" = "cyan2",
+      "Increased_Rank" = "chartreuse2",
+      "Decreased_Rank" = "deeppink1"
+    )
+  ) +
+  labs(
+    x = "Artist",
+    y = "Count",
+    title = "Maintained vs Increased Rank in Radio (Sample of 14
+Artists)",
+    fill = "Rank Change Type"
+  ) +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust =
+1))
+```
+
+```{r, message=FALSE, warning=FALSE}
+visual_streaming %>%
+  filter(Artist %in% sample_of_15_artists) %>%
+  group_by(Artist) %>%
+  summarize(
+    Maintained_Rank = sum(Maintained_Rank, na.rm = TRUE),
+    Increased_Rank = sum(Increased_Rank, na.rm = TRUE),
+    Decreased_Rank = sum(Decreased_Rank, na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(Maintained_Rank, Increased_Rank, Decreased_Rank),
+    names_to = "Type",
+    values_to = "Count"
+  ) %>%
+  ggplot(aes(x = Artist, y = Count, fill = Type)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(
+    values = c(
+      "Maintained_Rank" = "cyan2",
+      "Increased_Rank" = "chartreuse2",
+      "Decreased_Rank" = "deeppink1"
+    )
+  ) +
+  labs(
+    x = "Artist",
+    y = "Count",
+    title = "Maintained vs Increased Rank in Streaming (Sample of 14
+Artists)",
+    fill = "Rank Change Type"
+  ) +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust =
+1))
+```
+
+## 4. Peak Rank Position Comparison
+
+```{r, message=FALSE, warning=FALSE}
+radio_peaks <- radio %>%
+  group_by(Song, Artist) %>%
+  summarize(Radio = min(Rank, na.rm = TRUE))
+
+streaming_peaks <- streaming %>%
+  group_by(Song, Artist) %>%
+  summarize(Streaming = min(Rank, na.rm = TRUE))
+peaks <- merge(radio_peaks, streaming_peaks, by = c("Song", "Artist"))
+
+peaks_diff <- peaks %>%
+  mutate(Diff = abs(Radio - Streaming)) %>%
+  arrange(desc(Diff)) %>%
+  head(20)
+
+peaks_long <- peaks_diff %>%
+  pivot_longer(cols = c(Radio, Streaming), names_to = "Type", values_to =
+"Peak")
+
+plot <- peaks_long %>%
+  ggplot(aes(x = Song, y = Peak, fill = Type)) +
+  geom_col() +
+  labs(title = "Top 20 Songs With The Biggest Difference in Peaks", x =
+"Song Title", y = "Peak") +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust =
+1))
+plot
+```
+
+## 5. Top 20 Chart Performance
+
+```{r, message=FALSE, warning=FALSE}
+songsthatlastwholemonth <- combined %>%
+  filter(Type=="Streaming") %>%
+  filter(between(Date, as.Date("2025-09-22"), as.Date("2025-10-22"))) %>%
+  filter(Rank <= 20) %>%
+  select(Song, Rank,Date) %>%
+  group_by(Song) %>%
+  summarise(count=n()) %>%
+  filter(count==5) %>%
+  pull(Song)
+lastday <- combined %>%
+  filter(Type=="Streaming") %>%
+  filter(Date==as.Date("2025-10-22")) %>%
+  filter(Rank <= 20) %>%
+  filter(Song %in% songsthatlastwholemonth) %>%
+  select(Song, Rank,Date,Weeks_in_Charts)
+combined %>%
+  filter(Type=="Streaming") %>%
+  filter(between(Date, as.Date("2025-09-22"), as.Date("2025-10-22"))) %>%
+  filter(Song %in% songsthatlastwholemonth) %>%
+  filter(Rank <= 20) %>%
+  select(Song, Rank,Date) %>%
+  ggplot(aes(x=Date,y=Rank,col=Song))+
+    geom_line()+
+  geom_text(data=lastday,aes(label=Song),size=2,col="black")+
+  labs(
+    title="Streaming songs staying in the top 20 from 2025-09-22 to
+2025-10-22"
+  )
+```
+
+```{r, message=FALSE, warning=FALSE}
+combined %>%
+  filter(Type=="Streaming") %>%
+  filter(between(Date, as.Date("2025-09-22"), as.Date("2025-10-22"))) %>%
+  filter(Rank <= 20) %>%
+  select(Song, Rank,Date) %>%
+  ggplot(aes(x=Date,y=Rank,col=Song))+
+    geom_line()+
+  labs(
+    title="Streaming songs staying in the \ntop 20 from 2025-09-22 to
+2025-10-22"
+  )
+```
+
+```{r, message=FALSE, warning=FALSE}
+songsthatlastwholemonth <- combined %>%
+  filter(Type=="Radio") %>%
+  filter(between(Date, as.Date("2025-09-22"), as.Date("2025-10-22"))) %>%
+  filter(Rank <= 20) %>%
+  select(Song, Rank,Date) %>%
+  group_by(Song) %>%
+  summarise(count=n()) %>%
+  filter(count==5) %>%
+  pull(Song)
+lastday <- combined %>%
+  filter(Type=="Radio") %>%
+  filter(Date==as.Date("2025-10-22")) %>%
+  filter(Rank <= 20) %>%
+  filter(Song %in% songsthatlastwholemonth) %>%
+  select(Song, Rank,Date,Weeks_in_Charts)
+combined %>%
+  filter(Type=="Radio") %>%
+  filter(between(Date, as.Date("2025-09-22"), as.Date("2025-10-22"))) %>%
+  filter(Song %in% songsthatlastwholemonth) %>%
+  filter(Rank <= 20) %>%
+  select(Song, Rank,Date) %>%
+  ggplot(aes(x=Date,y=Rank,col=Song))+
+    geom_line()+
+  geom_text(data=lastday,aes(label=Song),size=2,col="black")+
+  labs(
+    title="Radio songs staying in the top 20 from 2025-09-22 to
+2025-10-22",
+    y="Rank in top 20"
+  )
+```
+
+```{r, message=FALSE, warning=FALSE}
+combined %>%
+  filter(Type=="Radio") %>%
+  filter(between(Date, as.Date("2025-09-22"), as.Date("2025-10-22"))) %>%
+  filter(Rank <= 20) %>%
+  select(Song, Rank,Date) %>%
+  ggplot(aes(x=Date,y=Rank,col=Song))+
+    geom_line()+
+  labs(
+    title="Radio songs staying in the \ntop 20 from 2025-09-22 to
+2025-10-22"
+  )
+```
+
