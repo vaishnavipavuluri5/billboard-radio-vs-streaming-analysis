@@ -31,5 +31,5 @@ For cleaning the data, we used the select column to take out the image URL colum
 
 This project includes an R Markdown analysis comparing Billboard radio and streaming chart performance. 
 
-- [View HTML Report](billboard_analysis_reconstructed.html) - Access the complete rendered analysis, including visualizations and results.
+- [View HTML Report](https://vaishnavipavuluri5.github.io/billboard-radio-vs-streaming-analysis/billboard_analysis_reconstructed.html) - Access the complete rendered analysis, including visualizations and results.
 
