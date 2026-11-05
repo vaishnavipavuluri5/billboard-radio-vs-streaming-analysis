@@ -86,6 +86,12 @@ sample_n(combined, 6)
 
 ## 2. Chart Longevity Analysis
 
+The first question we answered was, What song or album has the current highest number of charting weeks?
+In response, we grouped the dataset by song and counted how many weeks each song appeared by using group_by(),
+summarize() and n(). We then arranged (arrange()) these counts in descending order (desc()) and selected the top
+ten songs with the most charting weeks by using head(). This was repeated for streaming data and a combined
+dataset of radio and streaming.
+
 ```{r, message=FALSE, warning=FALSE}
 radioWeeks <- radio %>%
   group_by(Song) %>%
@@ -137,7 +143,22 @@ combinedWeeks %>%
   theme_minimal()
 ```
 
+For radio, the song that was on the charts for the longest number of weeks was “Stay” by Justin Bieber and
+ft. The Kid LAROI. For Streaming, the song that charted for the longest number of weeks was “Something in
+the Orange” by Zach Bryan. Combined, the longest time a song was on the charts was also “Stay”. There were also
+noticeable discrepancies between the individual charts and the combined chart. For example, “Beautiful Things”
+by Benson Boone did not appear among the top entries of either the radio or streaming charts, yet it appeared
+in the combined top 10.
+
 ## 3. Artist Ranking Consistency
+
+The next research question we addressed was: How does an artist’s rank consistency vary between radio and
+streaming platforms? To answer this question, we first filtered the combined dataset by type radio and type
+streaming, separately. For each, we used the mutate tool to add three new columns, for maintaining, increasing,
+and decreasing artist rank. For example, if current rank equals last week’s rank, the artist was categorized as
+TRUE for Maintained_Rank and FALSE for Increased_Rank and Decreased_Rank. We then took a random sample of 15
+artists and created bar graphs for both radio and streaming platforms to visually represent the frequency of
+their rank maintenance or changes:
 
 ```{r, message=FALSE, warning=FALSE}
 visual_radio <- combined %>%
@@ -242,7 +263,32 @@ Artists)",
 1))
 ```
 
+In this sample, focusing on the radio, Taylor Swift, Drake, and Beyonce have the greatest frequency across all
+three categories. This simply means they were on the charts most frequently. More important to our research
+question is that Taylor Swift and Beyonce have increased in rank slightly more than they have decreased or
+maintained rank, respectively. Their frequency of Increased_Rank is higher than Decreased_Rank and Maintained_Rank, but there is only a small difference. Artists including Drake, Jack Harlow, Olivia Rodrigo, and Tate McRae have the exact same frequency across the categories. This shows inconsistency in artists’ ranking in terms of the radio, because the likelihood of an artist maintaining their rank is about the same as the likelihood of increasing or decreasing their rank. 
+The bar chart for streaming data looks quite different. In this sample, Taylor Swift and Drake have the greatest
+frequency of maintaining their rank, but proportionally high frequencies of decreased ranking. This shows some
+consistency and some fluctuation in audience response to their music on streaming platforms. Beyonce is one artist
+who has maintained rank proportionally higher than decreasing or increasing rank, showing consistency.
+Olivia Rodrigo and Tate McRae show some rank consistency, as their frequency for Maintained_Rank is noticeably greater
+than for Decreased_Rank and Increased_Rank. 
+
+Overall, we found that on the radio, artists have similar frequencies for increasing vs. decreasing vs.
+maintaining rank. On streaming platforms however, there is greater variation across these three categories.
+Hence, artists show less rank consistency on the radio and more on streaming platforms.
+
 ## 4. Peak Rank Position Comparison
+
+The next research question we addressed was: What songs are ranked significantly higher in one data set over
+the other? (radio vs. streaming). For this, we specifically looked at the peaks of each song on the radio vs.
+streaming charts. We created a graph that compared the 20 songs with the biggest peak differences. Four of those
+songs peaked higher on radio than streaming, and the other 16 did much better on streaming over radio. We noticed
+that the songs that are ranked significantly higher in radio are typically released before streaming platforms
+existed. The one exception is a Benson Boone song, “Sorry I’m Here For Someone Else”, which indicates that he
+does better on radio than streaming platforms, and is most likely getting pushed on radio. Songs that are ranked
+higher in streaming are typically more viral online or from artists that have dedicated fanbases who will
+consistently stream their songs but don’t have control over radioplay.
 
 ```{r, message=FALSE, warning=FALSE}
 radio_peaks <- radio %>%
@@ -274,6 +320,16 @@ plot
 ```
 
 ## 5. Top 20 Chart Performance
+
+The next research question we addressed was: What songs have consistently placed in the top 20 over the past month?
+Radio and Streaming are compared separately. For this question first the Streaming data was analyzed, the first
+graph shows just the songs in the top 20 that stayed throughout the whole month and the second graph shows all of
+the songs in the top twenty throughout the month. The graphs both show how songs compete with each other where
+lower in the graph is higher in rank. The same was done for Radio with the third and fourth graphs. The results
+for streaming were: Golden, How it’s Done, Man I Need, Ordinary, Soda Pop, and Your Idol. The results for radio
+were Daisies, Golden, Heart Of Stone, Love Me Not, Manchild, Mutt, Mystical Magical, and Ordinary. All of these
+songs stayed in the top 20 for the most recent month from when we gathered the data which was September 22nd to
+October 22nd.
 
 ```{r, message=FALSE, warning=FALSE}
 songsthatlastwholemonth <- combined %>%
@@ -365,4 +421,22 @@ combined %>%
 2025-10-22"
   )
 ```
+
+## Discussion
+What song or album has the current highest number of charting weeks?
+These findings show how different influences impact which songs rise to the top across different mediums. Radio charts tend to favor songs with broad mainstream appeal, while streaming charts reward high replay value and genre-specific listening habits. The fact that “Stay” by Justin Bieber and ft. The Kid LAROI remains the longest-charting song overall (from this dataset) suggests that it performed consistently well across multiple formats (radio and streaming), giving it a strong combined score. Additionally, the fact that Benson Boone’s “Beautiful Things” appears on the combined chart but not on either individual chart shows how combined charts reward a balanced performance. The combined chart reflects a song's overall performance across all platforms, not just the top performers in any single medium. A song that performs fairly well everywhere can outrank songs that perform extremely well in one format but poorly in others. However, these conclusions are limited by the scope of the data. While unreasonable, if a song had a week-by-week record and streaming vs audio demographics this could allow for a deeper dive and understanding of long-term chart trends and success.
+
+How does an artist’s rank consistency vary between radio and streaming platforms? 
+When answering this research question, we found that artists have similar frequencies for increasing vs. decreasing vs. maintaining rank on the radio, but there is greater variation across these three categories, and more frequency of maintaining rank, on streaming platforms. Artists show less rank consistency on the radio and more on streaming platforms. This may be due to the fact that listeners have more control over their music exposure when streaming. They can instantly select, change, or loop music according to their preference. This contributes to more distinction between artists that become viral and those that are less popular.
+Since these results are drawn from a random sample of 14 artists, they may not be generalizable to the entire set of artists on the charts. If the sample size was increased, the results would be more generalizable.
+To expand upon these findings, it would be helpful to find or collect data about when each artist released new music and analyze how the release of new music correlates to their rank shifting up, down, or staying the same. With the current data, we do not know if the rank changes are affected by new music or past releases.
+
+What songs are ranked significantly higher in one data set over the other?
+The results show clear differences in how audiences engage with music across radio vs. streaming. They show different listening behaviors, with streaming being driven by listener choices and social trends, and radio shaped more by industry decisions and established programming. The limitations of the data is that we don’t have more information about the specific characteristics of the songs directly in the data like the year the song was released, what genre it is, etc. This would help us find patterns in why certain songs do better on radio or streaming. We did background research on the songs but it is hard to make conclusions with such a small sample size. Some further research we could do is explore a data set with richer metadata to identify clearer patterns behind each platform’s behavior. Including variables like genre, year, and promotional strategies would allow us to categorize the songs more clearly. Another direction is to analyze the Weeks_in_Charts column instead of the peaks of the songs because longevity might yield different results and show differences in quick virality versus steady popularity.
+
+What songs have consistently placed in the top 20 over the past month?
+The results of this analysis show songs that maintained consistency in their rank over a month. For streaming the main songs that maintained consistency were songs from Kpop Demon Hunters, they were already charting very high and managed to stay in the top 20 despite Taylor Swift dropping her album mid October and occupying the top twelve slots and pushing everything else down. These results show the power of both the fanbases of Taylor Swift and Kpop Demon Hunters. For radio the songs that maintained consistency of staying in the top 20 all showed an increase in rank over time, unlike Streaming which seems much more susceptible to drastic changes. These generalizations about the music industry are only being made on one month's worth of data, to reinforce these conclusions, longer term analysis over many months for both streaming and radio would need to occur. Further analysis could reveal just how susceptible to rapid changes radio is compared to streaming as well as how fast changes occur lower in the charts for both streaming and radio. 
+
+## Summary
+Overall, we found that the biggest reason why songs on streaming charts differ from songs on radio charts could be because radio favors a broader, mainstream audience while streaming is tailored to the individual's personal taste and preferences. Both mediums have different priorities and thus yield different results as seen in the datasets and graphs. 
 
